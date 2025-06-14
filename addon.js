@@ -131,6 +131,7 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
 
             if (response.data.page && response.data.total_pages) {
                 hasMore = response.data.page < response.data.total_pages;
+                console.log(`Paginazione per ${type} ${id}: pagina corrente ${response.data.page}, pagine totali ${response.data.total_pages}, hasMore: ${hasMore}`);
             }
 
         } catch (error) {
@@ -145,7 +146,7 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
         console.warn(`Nessun endpoint TMDB trovato per type: ${type}, id: ${id}`);
     }
 
-    return Promise.resolve({ metas: metas, hasMore: hasMore });
+    return Promise.resolve({ metas, hasMore });
 });
 
 // Gestore per i metadati (dettagli di film/serie)

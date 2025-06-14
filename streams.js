@@ -22,78 +22,117 @@ function defineStreamHandler(builder) {
             return Promise.resolve({ streams: [] });
         }
 
-        // L'ID per i film è "tmdb:MOVIE_ID"
-        // L'ID per le serie è "tmdb:SERIES_ID:SEASON_NUMBER:EPISODE_NUMBER"
         const idParts = id.split(':');
-        let sourceId = idParts[0];
-        let entityId = idParts[1];
-        let season, episode;
+        let effectiveImdbId = null;
+        let effectiveTmdbId = null;
+        let season = null;
+        let episode = null;
 
-        if (type === 'series') {
-            if (idParts.length === 4) { // tmdb:series_id:s:e o imdb:series_id:s:e
+        const firstPart = idParts[0];
+
+        if (type === 'movie') {
+            if (idParts.length === 1 && firstPart.startsWith('tt')) { // es. "tt12345"
+                effectiveImdbId = firstPart;
+            } else if (idParts.length === 2) {
+                if (firstPart === 'tmdb') { // es. "tmdb:67890"
+                    effectiveTmdbId = idParts[1];
+                } else if (firstPart === 'imdb') { // es. "imdb:tt12345"
+                    effectiveImdbId = idParts[1];
+                } else if (firstPart.startsWith('tt')) { 
+                    effectiveImdbId = firstPart;
+                     console.warn(`Formato ID film con ':' dopo tt-prefix non standard: ${id}, usando ${firstPart} come IMDb ID`);
+                } else {
+                    console.warn(`Formato ID film non riconosciuto: ${id}`);
+                    return Promise.resolve({ streams: [] });
+                }
+            } else {
+                console.warn(`ID film non valido per lo streaming: ${id}`);
+                return Promise.resolve({ streams: [] });
+            }
+        } else if (type === 'series') {
+            if (idParts.length === 4 && firstPart === 'tmdb') { // tmdb:SERIES_ID:S:E
+                effectiveTmdbId = idParts[1];
                 season = idParts[2];
                 episode = idParts[3];
-            } else if (idParts.length === 2 && sourceId.startsWith('tt')) { // imdb:series_id (senza S:E, meno comune per stream)
-                 console.warn(`ID serie IMDb ricevuto senza stagione/episodio: ${id}. Non si può procedere.`);
-                 return Promise.resolve({ streams: [] });
+            } else if (idParts.length === 4 && firstPart === 'imdb') { // imdb:IMDB_ID:S:E
+                effectiveImdbId = idParts[1];
+                season = idParts[2];
+                episode = idParts[3];
+            } else if (idParts.length === 3 && firstPart.startsWith('tt')) { // IMDB_ID:S:E (es. tt12345:1:1)
+                effectiveImdbId = firstPart;
+                season = idParts[1];
+                episode = idParts[2];
             } else {
                 console.warn(`ID serie non valido per lo streaming: ${id}`);
                 return Promise.resolve({ streams: [] });
             }
-        } else if (type === 'movie') {
-            if (idParts.length !== 2) {
-                 console.warn(`ID film non valido per lo streaming: ${id}`);
-                 return Promise.resolve({ streams: [] });
-            }
-        }
-
-        let tmdbId = null;
-
-        if (sourceId === 'tmdb') {
-            tmdbId = entityId;
-        } else if (sourceId.startsWith('tt')) { // Assumiamo sia un ID IMDb
-            try {
-                console.log(`Tentativo di convertire IMDb ID ${entityId} a TMDB ID`);
-                const findResponse = await axios.get(`https://api.themoviedb.org/3/find/${entityId}`, {
-                    params: { api_key: TMDB_API_KEY, external_source: 'imdb_id', language: 'it-IT' }
-                });
-                const results = type === 'movie' ? findResponse.data.movie_results : findResponse.data.tv_results;
-                if (results && results.length > 0) {
-                    tmdbId = results[0].id;
-                    console.log(`IMDb ID ${entityId} convertito a TMDB ID ${tmdbId}`);
-                } else {
-                    console.warn(`Nessun TMDB ID trovato per IMDb ID ${entityId}`);
-                    return Promise.resolve({ streams: [] });
-                }
-            } catch (error) {
-                console.error(`Errore durante la conversione IMDb ID ${entityId}:`, error.message);
-                return Promise.resolve({ streams: [] });
-            }
         } else {
-            console.warn(`ID stream non valido o non supportato: ${id}`);
+            console.warn(`Tipo di media non supportato per lo streaming: ${type}`);
             return Promise.resolve({ streams: [] });
         }
 
-        if (!tmdbId) {
+        // Ora, se abbiamo effectiveImdbId, convertiamolo in effectiveTmdbId
+        if (effectiveImdbId && !effectiveTmdbId) {
+            try {
+                console.log(`Tentativo di convertire IMDb ID ${effectiveImdbId} a TMDB ID`);
+                const findResponse = await axios.get(`https://api.themoviedb.org/3/find/${effectiveImdbId}`, {
+                    params: { api_key: TMDB_API_KEY, external_source: 'imdb_id' }
+                });
+                const results = type === 'movie' ? findResponse.data.movie_results : findResponse.data.tv_results;
+                if (results && results.length > 0) {
+                    effectiveTmdbId = results[0].id.toString(); // Assicurati sia stringa
+                    console.log(`IMDb ID ${effectiveImdbId} convertito a TMDB ID ${effectiveTmdbId}`);
+                } else {
+                    console.warn(`Nessun TMDB ID trovato per IMDb ID ${effectiveImdbId}`);
+                    return Promise.resolve({ streams: [] });
+                }
+            } catch (error) {
+                console.error(`Errore durante la conversione IMDb ID ${effectiveImdbId}:`, error.message);
+                return Promise.resolve({ streams: [] });
+            }
+        }
+
+        if (!effectiveTmdbId) {
             console.warn(`Impossibile determinare TMDB ID per ${id}`);
             return Promise.resolve({ streams: [] });
         }
 
         let vixsrcUrl;
-        let streamTitle = "Guarda (Proxy)";
+        let streamTitle = "Guarda (Proxy)"; // Titolo di fallback
 
         if (type === 'movie') {
             // Assumiamo che l'URL per i film su vixsrc.to sia /movie/TMDB_ID/
-            // Potrebbe essere necessario adattarlo se il pattern è diverso (es. /film/)
-            vixsrcUrl = `https://vixsrc.to/movie/${tmdbId}/`;
-            // Potresti voler recuperare il titolo del film da TMDB per un nome stream più descrittivo
-            // ma per ora usiamo un titolo generico.
-        } else if (type === 'series') {
-            if (idParts.length !== 4) {
-                // Questa condizione ora è gestita sopra durante il parsing dell'ID
+            vixsrcUrl = `https://vixsrc.to/movie/${effectiveTmdbId}/`;
+            try {
+                const movieDetails = await axios.get(`https://api.themoviedb.org/3/movie/${effectiveTmdbId}`, {
+                    params: { api_key: TMDB_API_KEY, language: 'it-IT' }
+                });
+                if (movieDetails.data && movieDetails.data.title) {
+                    streamTitle = movieDetails.data.title;
+                }
+            } catch (e) {
+                console.warn(`Impossibile recuperare il titolo del film TMDB ID ${effectiveTmdbId}: ${e.message}`);
             }
-            vixsrcUrl = `https://vixsrc.to/tv/${tmdbId}/${season}/${episode}/`;
-            streamTitle = `S${season} E${episode} (Proxy)`;
+        } else if (type === 'series') {
+            // season e episode dovrebbero essere stati popolati correttamente
+            if (!season || !episode) {
+                console.error(`Stagione o episodio mancanti per serie con TMDB ID ${effectiveTmdbId} dall'ID originale ${id}`);
+                return Promise.resolve({ streams: [] });
+            }
+            try {
+                const episodeDetails = await axios.get(`https://api.themoviedb.org/3/tv/${effectiveTmdbId}/season/${season}/episode/${episode}`, {
+                    params: { api_key: TMDB_API_KEY, language: 'it-IT' }
+                });
+                if (episodeDetails.data && episodeDetails.data.name) {
+                    streamTitle = episodeDetails.data.name;
+                } else {
+                    streamTitle = `S${season} E${episode}`; // Fallback se il nome dell'episodio non è disponibile
+                }
+            } catch (e) {
+                console.warn(`Impossibile recuperare il titolo dell'episodio TMDB ID ${effectiveTmdbId} S${season}E${episode}: ${e.message}`);
+                streamTitle = `S${season} E${episode}`; // Fallback in caso di errore
+            }
+            vixsrcUrl = `https://vixsrc.to/tv/${effectiveTmdbId}/${season}/${episode}/`;
         } else {
             console.warn(`Tipo di media non supportato per lo streaming: ${type}`);
             return Promise.resolve({ streams: [] });
