@@ -146,17 +146,17 @@ function defineStreamHandler(builder) {
 
         const streams = [
             {
-                name: "VixSRC (Proxy)", // Nome della sorgente visualizzato in Stremio
+                name: "Vixsrc (Proxy)", // Nome della sorgente visualizzato in Stremio
                 url: proxyStreamUrl,
                 title: streamTitle, // Titolo visualizzato per lo stream specifico
                 // Stremio dovrebbe gestire il redirect da proxyStreamUrl.
                 // Se il proxy non imposta Content-Type corretto o se ci sono problemi con i CORS,
                 // potresti aver bisogno di behaviorHints, ma proviamo prima senza.
                 // Esempio:
-                // behaviorHints: {
-                //    proxyHeaders: { "request": { "Referer": "https://vixsrc.to/" } },
+                behaviorHints: {
+                   proxyHeaders: { "request": { "Referer": "https://vixsrc.to/" } },
                 //    notWebReady: true // Se il link non è direttamente riproducibile nel browser
-                // }
+                 }
             }
         ];
 
