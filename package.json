@@ -1,6 +1,6 @@
 {
   "name": "stremio-tmdb-catalogs-it",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Addon Stremio per cataloghi TMDB in italiano",
   "main": "addon.js",
   "scripts": {

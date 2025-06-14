@@ -11,44 +11,12 @@ const ITEMS_PER_PAGE = 20; // TMDB di solito restituisce 20 elementi per pagina
 
 const manifest = {
     id: 'org.stremio.vixsrc.addon',
-    version: '1.2.0',
+    version: '1.2.1',
     name: 'Vixsrc.to streams addon',
     description: 'Recupera flussi da VixSRC.to per film e serie TV.',
     resources: ['catalog', 'stream', 'meta'], // Aggiunto 'meta'
     types: ['movie', 'series'],
-    catalogs: [
-        // Cataloghi Film
-        {
-            type: 'movie',
-            id: 'tmdb_movie_popular_it',
-            name: 'Film Popolari'
-        },
-        {
-            type: 'movie',
-            id: 'tmdb_movie_top_rated_it',
-            name: 'Film più Votati'
-        },
-        {
-            type: 'movie',
-            id: 'tmdb_movie_now_playing_it',
-            name: 'Film al Cinema Ora'
-        },
-        // Cataloghi Serie TV
-        {
-            type: 'series',
-            id: 'tmdb_series_popular_it',
-            name: 'Popolari' // Nome aggiornato
-        },
-        {
-            type: 'series',
-            id: 'tmdb_series_top_rated_it',
-            name: 'Le più votate' // Nome aggiornato
-        },
-        {
-            type: 'series',
-            id: 'tmdb_series_featured_it', // Nuova categoria
-            name: 'Consigliate' // Nome aggiornato
-        },
+    catalogs: [      
         {
             type: 'series',
             id: 'tmdb_series_kdrama_it',
@@ -59,15 +27,7 @@ const manifest = {
 
 const builder = new addonBuilder(manifest);
 const tmdbEndpointMap = {
-    movie: {
-        tmdb_movie_popular_it: '/movie/popular',
-        tmdb_movie_top_rated_it: '/movie/top_rated',
-        tmdb_movie_now_playing_it: '/movie/now_playing',
-    },
     series: {
-        tmdb_series_popular_it: '/tv/popular',
-        tmdb_series_top_rated_it: '/tv/top_rated',
-        tmdb_series_featured_it: '/trending/tv/week', // Endpoint per "Featured" (trending)
         tmdb_series_kdrama_it: { // Oggetto per configurazione più complessa
             path: '/discover/tv',
             extraParams: { with_origin_country: 'KR', sort_by: 'popularity.desc' } // Riportato a paese d'origine Corea del Sud
@@ -131,6 +91,7 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
 
             if (response.data.page && response.data.total_pages) {
                 hasMore = response.data.page < response.data.total_pages;
+                console.log(`Paginazione per ${type} ${id}: ${metas.length} meta restituiti. Pagina corrente TMDB ${response.data.page}, pagine totali TMDB ${response.data.total_pages}, hasMore: ${hasMore}`);
                 console.log(`Paginazione per ${type} ${id}: pagina corrente ${response.data.page}, pagine totali ${response.data.total_pages}, hasMore: ${hasMore}`);
             }
 
@@ -139,13 +100,14 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
             if (error.response) {
                 console.error('Risposta errore TMDB:', error.response.status, error.response.data);
             }
-            // Restituisce un array vuoto in caso di errore per non rompere Stremio
+            console.log(`Paginazione per ${type} ${id}: errore, 0 meta restituiti. hasMore: false`);
             return Promise.resolve({ metas: [], hasMore: false });
         }
     } else {
         console.warn(`Nessun endpoint TMDB trovato per type: ${type}, id: ${id}`);
+        console.log(`Paginazione per ${type} ${id}: nessun endpoint, 0 meta restituiti. hasMore: false`);
     }
-
+    // Rimosso il log duplicato di metas.length qui, poiché è già sopra o in caso di errore/no endpoint.
     return Promise.resolve({ metas, hasMore });
 });
 
