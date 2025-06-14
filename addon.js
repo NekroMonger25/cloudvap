@@ -70,7 +70,7 @@ const tmdbEndpointMap = {
         tmdb_series_featured_it: '/trending/tv/week', // Endpoint per "Featured" (trending)
         tmdb_series_kdrama_it: { // Oggetto per configurazione più complessa
             path: '/discover/tv',
-            extraParams: { with_original_language: 'it', sort_by: 'popularity.desc' } // Modificato per lingua originale italiana
+            extraParams: { with_origin_country: 'KR', sort_by: 'popularity.desc' } // Riportato a paese d'origine Corea del Sud
         }
     }
 };
