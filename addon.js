@@ -13,7 +13,7 @@ const manifest = {
     id: 'org.stremio.vixsrc.addon',
     version: '1.2.1',
     name: 'Vixsrc.to streams addon',
-    description: 'Recupera flussi da Vixsrc.to per film e serie TV.',
+    description: 'Recupera flussi da VixSRC.to per film e serie TV.',
     resources: ['catalog', 'stream', 'meta'], // Aggiunto 'meta'
     types: ['movie', 'series'],
     catalogs: [      
@@ -45,7 +45,7 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
         console.error("ERRORE: La variabile d'ambiente TMDB_API_KEY non è impostata.");
         return Promise.reject(new Error("Chiave API TMDB non configurata. Impostare la variabile d'ambiente TMDB_API_KEY."));
     }
-    let hasMore = true;
+    let hasMore = false;
     let metas = [];
     const catalogConfig = tmdbEndpointMap[type] && tmdbEndpointMap[type][id];
 
@@ -90,8 +90,8 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
             });
 
             if (response.data.page && response.data.total_pages) {
-                hasMore = response.data.page < response.data.total_pages;
-                console.log(`Paginazione per ${type} ${id}: ${metas.length} meta restituiti. Pagina corrente TMDB ${response.data.page}, pagine totali TMDB ${response.data.total_pages}, hasMore: ${hasMore}`);
+                // Modifica per hasMore: basati sul numero di risultati ricevuti
+                hasMore = metas.length === ITEMS_PER_PAGE;
                 console.log(`Paginazione per ${type} ${id}: pagina corrente ${response.data.page}, pagine totali ${response.data.total_pages}, hasMore: ${hasMore}`);
             }
 
