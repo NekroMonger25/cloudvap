@@ -153,10 +153,13 @@ function defineStreamHandler(builder) {
                 // Se il proxy non imposta Content-Type corretto o se ci sono problemi con i CORS,
                 // potresti aver bisogno di behaviorHints, ma proviamo prima senza.
                 // Esempio:
-                behaviorHints: {
-                   proxyHeaders: { "request": { "Referer": "https://vixsrc.to/" } },
+                // behaviorHints: {
+                //    proxyHeaders: { "request": { "Referer": "https://vixsrc.to/" } },
                 //    notWebReady: true // Se il link non è direttamente riproducibile nel browser
-                 }
+                // }
+                behaviorHints: {
+                    notWebReady: true // Indica a Stremio che lo stream potrebbe non essere direttamente riproducibile in un browser web standard
+                }
             }
         ];
 
