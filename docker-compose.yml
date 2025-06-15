@@ -4,7 +4,7 @@ services:
   vixsrc-stremio-addon:
     build: .
     container_name: vixsrc-stremio-addon
-    environment:
+   # environment:
     #  TMDB_API_KEY: ${TMDB_API_KEY:?Errore: La variabile d'ambiente TMDB_API_KEY deve essere impostata}
     #  MEDIAFLOW_PROXY_URL: ${MEDIAFLOW_PROXY_URL:?Errore: La variabile d'ambiente MEDIAFLOW_PROXY_URL deve essere impostata}
     #  API_PASSWORD: ${API_PASSWORD:?Errore: La variabile d'ambiente API_PASSWORD deve essere impostata}
