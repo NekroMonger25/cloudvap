@@ -4,11 +4,11 @@ services:
   vixsrc-stremio-addon:
     build: .
     container_name: vixsrc-stremio-addon
-   # environment:
-   #   TMDB_API_KEY: ${TMDB_API_KEY:?Errore: La variabile d'ambiente TMDB_API_KEY deve essere impostata}
-   #   MEDIAFLOW_PROXY_URL: ${MEDIAFLOW_PROXY_URL:?Errore: La variabile d'ambiente MEDIAFLOW_PROXY_URL deve essere impostata}
-   #   API_PASSWORD: ${API_PASSWORD:?Errore: La variabile d'ambiente API_PASSWORD deve essere impostata}
-   #   PORT: ${PORT:-5000} # L'applicazione Node.js userà questa variabile per la porta interna
+    environment:
+      TMDB_API_KEY: ${TMDB_API_KEY:?Errore: La variabile d'ambiente TMDB_API_KEY deve essere impostata}
+      MEDIAFLOW_PROXY_URL: ${MEDIAFLOW_PROXY_URL:?Errore: La variabile d'ambiente MEDIAFLOW_PROXY_URL deve essere impostata}
+      API_PASSWORD: ${API_PASSWORD:?Errore: La variabile d'ambiente API_PASSWORD deve essere impostata}
+      PORT: ${PORT:-5000} # L'applicazione Node.js userà questa variabile per la porta interna
     ports:
       - "${PORT:-5000}:5000" # Usa la variabile PORT dal .env o default a 5000 per l'host
     restart: unless-stopped
