@@ -18,6 +18,7 @@ const manifest = {
     version: '1.2.4',
     name: 'Vixsrc.to streams addon',
     description: 'Recupera flussi da Vixsrc.to per film e serie TV.',
+    logo: 'https://www.svgrepo.com/show/403787/letter-v.svg', // Aggiunta icona
     resources: ['catalog', 'stream', 'meta'], // Aggiunto 'meta'
     types: ['movie', 'series'],
     catalogs: [      
