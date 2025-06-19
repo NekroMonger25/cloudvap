@@ -8,8 +8,8 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 const ITEMS_PER_PAGE = 20; // TMDB di solito restituisce 20 elementi per pagina
-const CATALOG_CACHE_MAX_AGE = 3600; // Cache per 1 ora (in secondi)
-const CATALOG_STALE_REVALIDATE = 60 * 5; // Riconvalida in background dopo 5 minuti (in secondi)
+const CATALOG_CACHE_MAX_AGE = 1300; // Cache per 1/2 ora (in secondi)
+const CATALOG_STALE_REVALIDATE = 60 * 2; // Riconvalida in background dopo 2 minuti (in secondi)
 const CATALOG_STALE_ERROR = 60 * 60 * 24; // Usa dati vecchi fino a 24 ore in caso di errore (in secondi)
 
 
@@ -18,7 +18,7 @@ const manifest = {
     version: '1.2.5',
     name: 'VixSrc streams addon',
     description: 'Recupera flussi da VixSrc per film e serie TV',
-    logo: '',
+    logo: 'https://icon-library.com/images/letter-v-icon/letter-v-icon-8.jpg',
     resources: ['catalog', 'stream', 'meta'], // Aggiunto 'meta'
     types: ['movie', 'series'],
     catalogs: [      
