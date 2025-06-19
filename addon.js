@@ -15,7 +15,7 @@ const CATALOG_STALE_ERROR = 60 * 60 * 24; // Usa dati vecchi fino a 24 ore in ca
 
 const manifest = {
     id: 'org.stremio.vixsrc.addon',
-    version: '1.2.2',
+    version: '1.2.3',
     name: 'Vixsrc.to streams addon',
     description: 'Recupera flussi da Vixsrc.to per film e serie TV.',
     resources: ['catalog', 'stream', 'meta'], // Aggiunto 'meta'
@@ -38,7 +38,16 @@ const tmdbEndpointMap = {
     series: {
         tmdb_series_kdrama_it: { // Oggetto per configurazione più complessa
             path: '/discover/tv',
-            extraParams: { with_origin_country: 'KR', sort_by: 'popularity.desc' } // Riportato a paese d'origine Corea del Sud
+            extraParams: {
+                with_origin_country: 'KR',
+                 sort_by: 'first_air_date.desc', // Ordinamento per data di uscita decrescente
+                // 'vote_average.gte': 0,        // Rating minimo 3
+                // 'vote_average.lte': 10,       // Rating massimo 10
+                // 'vote_count.gte': 0,
+                // 'vote_count.lte': 1000,        // Numero minimo di voti
+                'with_genres': 18            // Filtro per genere: Drama (ID 18)
+                // 'with_runtime.gte': 45       // Durata minima episodi in minuti (commentato per test)
+            }
         }
     }
 };
