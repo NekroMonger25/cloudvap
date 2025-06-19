@@ -45,7 +45,7 @@ const tmdbEndpointMap = {
                  'vote_average.lte': 10,       // Rating massimo 10
                 // 'vote_count.gte': 0,
                 // 'vote_count.lte': 1000,        // Numero minimo di voti
-                'with_genres': 18            // Filtro per genere: Drama (ID 18)
+                'with_genres': 18,            // Filtro per genere: Drama (ID 18)
                 'with_runtime.gte': 30       // Durata minima episodi in minuti (commentato per test)
             }
         }
