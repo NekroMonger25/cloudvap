@@ -15,10 +15,9 @@ const CATALOG_STALE_ERROR = 60 * 60 * 24; // Usa dati vecchi fino a 24 ore in ca
 
 const manifest = {
     id: 'org.stremio.vixsrc.addon',
-    version: '1.2.3',
+    version: '1.2.4',
     name: 'Vixsrc.to streams addon',
     description: 'Recupera flussi da Vixsrc.to per film e serie TV.',
-    logo: 'https://icon-library.com/images/letter-v-icon/letter-v-icon-8.jpg', // Logo aggiornato
     resources: ['catalog', 'stream', 'meta'], // Aggiunto 'meta'
     types: ['movie', 'series'],
     catalogs: [      
@@ -105,7 +104,37 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
 
             const results = response.data.results || [];
 
-            metas = results.map(item => {
+            // Applica i filtri ai risultati prima di mapparli in metadati Stremio
+            const filteredResults = results.filter(item => {
+                // Filtro 1: Escludi serie senza descrizione in italiano
+                // TMDB con language=it-IT dovrebbe già fornire descrizioni in italiano se disponibili.
+                // Questo filtro rimuove quelle che, anche con la lingua impostata, non hanno una descrizione.
+                if (type === 'series' && (!item.overview || item.overview.trim() === '')) {
+                    // console.log(`Esclusa serie ${item.name} (ID: ${item.id}) per mancanza descrizione.`);
+                    return false;
+                }
+
+                // Filtro 2: Escludi serie che devono ancora uscire (solo per serie)
+                if (type === 'series' && item.first_air_date) {
+                    try {
+                        const firstAirDate = new Date(item.first_air_date);
+                        const now = new Date();
+                        // Confronta solo la data, ignora l'ora
+                        const firstAirDateOnly = new Date(firstAirDate.getFullYear(), firstAirDate.getMonth(), firstAirDate.getDate());
+                        const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+                        if (firstAirDateOnly > nowOnly) {
+                            // console.log(`Esclusa serie ${item.name} (ID: ${item.id}) perché deve ancora uscire (${item.first_air_date}).`);
+                            return false;
+                        }
+                    } catch (e) {
+                        console.warn(`Errore nel parsing della data ${item.first_air_date} per la serie ${item.name}: ${e.message}`);
+                        // Se la data non è valida, meglio includerla per sicurezza piuttosto che escluderla per errore
+                    }
+                }
+                return true; // Mantieni l'elemento se passa tutti i filtri
+            });
+            metas = filteredResults.map(item => {
                 const meta = {
                     id: `tmdb:${item.id}`, // Usa l'ID TMDB come ID univoco per Stremio
                     type: type,
@@ -127,9 +156,10 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
                 return meta;
             });
             if (response.data.page && response.data.total_pages) {
-                // Logica di paginazione più semplice: hasMore è true se ci sono ancora pagine su TMDB
+                // Modifica per hasMore: basati sul numero di risultati ricevuti
+                // Logica migliorata: hasMore è true se ci sono ancora pagine su TMDB
                 hasMore = response.data.page < response.data.total_pages;
-                console.log(`Paginazione TMDB: pagina ${response.data.page}/${response.data.total_pages}. Risultati in questa pagina: ${metas.length}. hasMore impostato a: ${hasMore}`);
+                console.log(`Paginazione TMDB: pagina ${response.data.page}/${response.data.total_pages}. Risultati filtrati in questa pagina: ${metas.length}. hasMore impostato a: ${hasMore}`);
             }
 
         } catch (error) {
