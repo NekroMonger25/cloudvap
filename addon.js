@@ -15,10 +15,10 @@ const CATALOG_STALE_ERROR = 60 * 60 * 24; // Usa dati vecchi fino a 24 ore in ca
 
 const manifest = {
     id: 'org.stremio.vixsrc.addon',
-    version: '1.2.4',
+    version: '1.2.3',
     name: 'Vixsrc.to streams addon',
     description: 'Recupera flussi da Vixsrc.to per film e serie TV.',
-    logo: 'https://www.svgrepo.com/show/403787/letter-v.svg', // Aggiunta icona
+    logo: 'https://icon-library.com/images/letter-v-icon/letter-v-icon-8.jpg', // Aggiunta icona
     resources: ['catalog', 'stream', 'meta'], // Aggiunto 'meta'
     types: ['movie', 'series'],
     catalogs: [      
@@ -157,10 +157,10 @@ builder.defineCatalogHandler(async ({ type, id, extra }) => {
                 return meta;
             });
             if (response.data.page && response.data.total_pages) {
-                // Modifica per hasMore: basati sul numero di risultati ricevuti
-                // Logica migliorata: hasMore è true se ci sono ancora pagine su TMDB
-                hasMore = response.data.page < response.data.total_pages;
-                console.log(`Paginazione TMDB: pagina ${response.data.page}/${response.data.total_pages}. Risultati filtrati in questa pagina: ${metas.length}. hasMore impostato a: ${hasMore}`);
+                // Logica di paginazione ripristinata: hasMore è true se il numero di risultati filtrati
+                // per questa pagina è uguale a ITEMS_PER_PAGE.
+                hasMore = metas.length === ITEMS_PER_PAGE;
+                console.log(`Paginazione TMDB: pagina ${response.data.page}/${response.data.total_pages}. Risultati filtrati in questa pagina: ${metas.length}. ITEMS_PER_PAGE: ${ITEMS_PER_PAGE}. hasMore impostato a: ${hasMore}`);
             }
 
         } catch (error) {
