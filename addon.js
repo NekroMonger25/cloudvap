@@ -17,7 +17,8 @@ const manifest = {
     id: 'org.stremio.vixsrc.addon',
     version: '1.2.4',
     name: 'Vixsrc.to streams addon',
-    description: 'Recupera flussi da Vixsrc.to per film e serie TV.',
+    description: 'Recupera flussi da VixSrc per film e serie TV',
+    logo: 'https://icon-library.com/images/letter-v-icon/letter-v-icon-8.jpg',
     resources: ['catalog', 'stream', 'meta'], // Aggiunto 'meta'
     types: ['movie', 'series'],
     catalogs: [      
@@ -48,7 +49,7 @@ const tmdbEndpointMap = {
                  'vote_average.lte': 10,       // Rating massimo 10
                 // 'vote_count.lte': 1000,        // Numero minimo di voti
                 'with_genres': 18,            // Filtro per genere: Drama (ID 18)
-                'with_runtime.gte': 30       // Durata minima episodi in minuti (commentato per test)
+                'with_runtime.gte': 20       // Durata minima episodi in minuti (commentato per test)
             }
         }
     }
