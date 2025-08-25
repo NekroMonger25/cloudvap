@@ -1,24 +1,21 @@
 // Questo modulo definisce il gestore degli stream per l'addon
+
 const axios = require('axios'); // Necessario per chiamate API aggiuntive
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY; // Assicurati che sia disponibile
-const MEDIAFLOW_PROXY_URL = process.env.MEDIAFLOW_PROXY_URL;
-const MEDIAFLOW_PROXY_API_PASSWORD = process.env.API_PASSWORD; // Corretto per corrispondere al file .env
 
 /**
  * Definisce il gestore degli stream sull'istanza del builder dell'addon.
  * @param {import('stremio-addon-sdk').addonBuilder} builder - L'istanza di addonBuilder.
  */
 function defineStreamHandler(builder) {
+
     builder.defineStreamHandler(async ({ type, id, config }) => {
+
         console.log(`Richiesta stream per: type=${type}, id=${id}`);
 
         if (!TMDB_API_KEY) {
             console.error("ERRORE: TMDB_API_KEY non impostata per la conversione ID in streams.js.");
-            return Promise.resolve({ streams: [] });
-        }
-        if (!MEDIAFLOW_PROXY_URL || !MEDIAFLOW_PROXY_API_PASSWORD) {
-            console.error("ERRORE: MEDIAFLOW_PROXY_URL o API_PASSWORD non sono impostate nelle variabili d'ambiente.");
             return Promise.resolve({ streams: [] });
         }
 
@@ -27,7 +24,6 @@ function defineStreamHandler(builder) {
         let effectiveTmdbId = null;
         let season = null;
         let episode = null;
-
         const firstPart = idParts[0];
 
         if (type === 'movie') {
@@ -38,9 +34,9 @@ function defineStreamHandler(builder) {
                     effectiveTmdbId = idParts[1];
                 } else if (firstPart === 'imdb') { // es. "imdb:tt12345"
                     effectiveImdbId = idParts[1];
-                } else if (firstPart.startsWith('tt')) { 
+                } else if (firstPart.startsWith('tt')) {
                     effectiveImdbId = firstPart;
-                     console.warn(`Formato ID film con ':' dopo tt-prefix non standard: ${id}, usando ${firstPart} come IMDb ID`);
+                    console.warn(`Formato ID film con ':' dopo tt-prefix non standard: ${id}, usando ${firstPart} come IMDb ID`);
                 } else {
                     console.warn(`Formato ID film non riconosciuto: ${id}`);
                     return Promise.resolve({ streams: [] });
@@ -97,12 +93,12 @@ function defineStreamHandler(builder) {
             return Promise.resolve({ streams: [] });
         }
 
-        let vixsrcUrl;
-        let streamTitle = "Guarda (Proxy)"; // Titolo di fallback
+        let streamUrl;
+        let streamTitle = "Guarda (Direct)"; // Titolo di fallback
 
         if (type === 'movie') {
-            // Assumiamo che l'URL per i film su vixsrc.to sia /movie/TMDB_ID/
-            vixsrcUrl = `https://vixsrc.to/movie/${effectiveTmdbId}/`;
+            // Assumiamo che l'URL diretto per i film su vixsrc.to sia /movie/TMDB_ID/
+            streamUrl = `https://vixsrc.to/movie/${effectiveTmdbId}/`;
             try {
                 const movieDetails = await axios.get(`https://api.themoviedb.org/3/movie/${effectiveTmdbId}`, {
                     params: { api_key: TMDB_API_KEY, language: 'it-IT' }
@@ -114,7 +110,6 @@ function defineStreamHandler(builder) {
                 console.warn(`Impossibile recuperare il titolo del film TMDB ID ${effectiveTmdbId}: ${e.message}`);
             }
         } else if (type === 'series') {
-            // season e episode dovrebbero essere stati popolati correttamente
             if (!season || !episode) {
                 console.error(`Stagione o episodio mancanti per serie con TMDB ID ${effectiveTmdbId} dall'ID originale ${id}`);
                 return Promise.resolve({ streams: [] });
@@ -132,39 +127,28 @@ function defineStreamHandler(builder) {
                 console.warn(`Impossibile recuperare il titolo dell'episodio TMDB ID ${effectiveTmdbId} S${season}E${episode}: ${e.message}`);
                 streamTitle = `S${season} E${episode}`; // Fallback in caso di errore
             }
-            vixsrcUrl = `https://vixsrc.to/tv/${effectiveTmdbId}/${season}/${episode}/`;
+            streamUrl = `https://vixsrc.to/tv/${effectiveTmdbId}/${season}/${episode}/`;
         } else {
             console.warn(`Tipo di media non supportato per lo streaming: ${type}`);
             return Promise.resolve({ streams: [] });
         }
 
-        const encodedVixsrcUrl = encodeURIComponent(vixsrcUrl);
-
-        // Costruiamo l'URL per mediaflow-proxy basandoci sulla struttura dei tuoi log
-        // GET /extractor/video?host=VixCloud&d=<URL_VIXSRC>&redirect_stream=true&additionalProp1={}&api_password=123456
-        const proxyStreamUrl = `${MEDIAFLOW_PROXY_URL}/extractor/video?host=VixCloud&d=${encodedVixsrcUrl}&redirect_stream=true&additionalProp1=%7B%7D&api_password=${MEDIAFLOW_PROXY_API_PASSWORD}`;
-
+        // Costruiamo l'array di streams con l'URL diretto senza proxy
         const streams = [
             {
-                name: "Vixsrc (Proxy)", // Nome della sorgente visualizzato in Stremio
-                url: proxyStreamUrl,
-                title: streamTitle, // Titolo visualizzato per lo stream specifico
-                // Stremio dovrebbe gestire il redirect da proxyStreamUrl.
-                // Se il proxy non imposta Content-Type corretto o se ci sono problemi con i CORS,
-                // potresti aver bisogno di behaviorHints, ma proviamo prima senza.
-                // Esempio:
-                // behaviorHints: {
-                //    proxyHeaders: { "request": { "Referer": "https://vixsrc.to/" } },
-                //    notWebReady: true // Se il link non è direttamente riproducibile nel browser
-                // }
+                name: "Vixsrc (Direct)", // Nome della sorgente visualizzato in Stremio
+                url: streamUrl,
+                title: streamTitle,
+                // Indichiamo che lo stream potrebbe non essere direttamente riproducibile in un browser senza ulteriori manipolazioni
                 behaviorHints: {
-                    notWebReady: true // Indica a Stremio che lo stream potrebbe non essere direttamente riproducibile in un browser web standard
+                    notWebReady: true
                 }
             }
         ];
 
         return Promise.resolve({ streams: streams });
     });
+
 }
 
 module.exports = defineStreamHandler;
