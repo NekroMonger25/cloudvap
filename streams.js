@@ -93,36 +93,16 @@ function defineStreamHandler(builder) {
 
         if (type === 'movie') {
             streamUrl = `https://vixsrc.to/movie/${effectiveTmdbId}`;
-            try {
-                const movieDetails = await axios.get(`https://api.themoviedb.org/3/movie/${effectiveTmdbId}`, {
-                    params: { api_key: TMDB_API_KEY, language: 'it-IT' }
-                });
-                if (movieDetails.data && movieDetails.data.title) {
-                    streamTitle = movieDetails.data.title;
-                }
-            } catch (e) {
-                console.warn(`Impossibile recuperare il titolo del film TMDB ID ${effectiveTmdbId}: ${e.message}`);
-            }
         } else if (type === 'series') {
             if (!season || !episode) {
                 console.error(`Stagione o episodio mancanti per serie con TMDB ID ${effectiveTmdbId} dall'ID originale ${id}`);
                 return Promise.resolve({ streams: [] });
             }
             streamUrl = `https://vixsrc.to/tv/${effectiveTmdbId}/${season}/${episode}`;
-            try {
-                const episodeDetails = await axios.get(`https://api.themoviedb.org/3/tv/${effectiveTmdbId}/season/${season}/episode/${episode}`, {
-                    params: { api_key: TMDB_API_KEY, language: 'it-IT' }
-                });
-                if (episodeDetails.data && episodeDetails.data.name) {
-                    streamTitle = episodeDetails.data.name;
-                } else {
-                    streamTitle = `S${season} E${episode}`;
-                }
-            } catch (e) {
-                console.warn(`Impossibile recuperare il titolo dell'episodio TMDB ID ${effectiveTmdbId} S${season}E${episode}: ${e.message}`);
-                streamTitle = `S${season} E${episode}`;
-            }
         }
+
+        // Aggiunto log per l'URL finale costruito
+        console.log(`URL stream finale costruito: ${streamUrl}`);
 
         const streams = [
             {
