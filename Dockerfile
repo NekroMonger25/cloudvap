@@ -16,7 +16,8 @@ COPY . .
 
 # Esponi la porta su cui l'addon sarà in ascolto
 # L'addon usa la variabile d'ambiente PORT o 5000 di default
-EXPOSE 5000
+EXPOSE 5555
 
 # Comando per avviare l'applicazione
+
 CMD [ "npm", "start" ]
