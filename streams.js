@@ -1,10 +1,6 @@
 const axios = require('axios'); // Necessario per chiamate API aggiuntive
 const TMDB_API_KEY = process.env.TMDB_API_KEY; // Necessaria solo se serve per recupero titoli
 
-/**
- * Definisce il gestore degli stream sull'istanza del builder dell'addon.
- * @param {import('stremio-addon-sdk').addonBuilder} builder - L'istanza di addonBuilder.
- */
 function defineStreamHandler(builder) {
     builder.defineStreamHandler(async ({ type, id, config }) => {
         console.log(`Richiesta stream per: type=${type}, id=${id}`);
@@ -21,7 +17,6 @@ function defineStreamHandler(builder) {
         const idParts = id.split(':');
         const firstPart = idParts[0];
 
-        // Estrarre l'ID IMDb e rimuovere il prefisso "tt"
         function cleanImdbId(rawId) {
             return rawId.startsWith('tt') ? rawId.substring(2) : rawId;
         }
@@ -64,7 +59,6 @@ function defineStreamHandler(builder) {
 
         if (type === 'movie') {
             streamUrl = `https://vixsrc.to/movie/${imdbId}`;
-            // Facoltativo: recupera titolo dal TMDb usando TMDB_API_KEY se necessario
         } else if (type === 'series') {
             if (!season || !episode) {
                 console.warn("Stagione o episodio mancanti per serie");
@@ -72,6 +66,9 @@ function defineStreamHandler(builder) {
             }
             streamUrl = `https://vixsrc.to/tv/${imdbId}/${season}/${episode}`;
         }
+
+        // Log per vedere l'URL finale costruito
+        console.log(`URL stream finale costruito: ${streamUrl}`);
 
         const streams = [
             {
