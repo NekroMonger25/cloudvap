@@ -1,7 +1,4 @@
-// Questo modulo definisce il gestore degli stream per l'addon
-
 const axios = require('axios'); // Necessario per chiamate API aggiuntive
-
 const TMDB_API_KEY = process.env.TMDB_API_KEY; // Assicurati che sia disponibile
 
 /**
@@ -9,9 +6,7 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY; // Assicurati che sia disponibile
  * @param {import('stremio-addon-sdk').addonBuilder} builder - L'istanza di addonBuilder.
  */
 function defineStreamHandler(builder) {
-
     builder.defineStreamHandler(async ({ type, id, config }) => {
-
         console.log(`Richiesta stream per: type=${type}, id=${id}`);
 
         if (!TMDB_API_KEY) {
@@ -67,7 +62,7 @@ function defineStreamHandler(builder) {
             return Promise.resolve({ streams: [] });
         }
 
-        // Ora, se abbiamo effectiveImdbId, convertiamolo in effectiveTmdbId
+        // Convertiamo IMDb ID in TMDB ID se necessario
         if (effectiveImdbId && !effectiveTmdbId) {
             try {
                 console.log(`Tentativo di convertire IMDb ID ${effectiveImdbId} a TMDB ID`);
@@ -76,7 +71,7 @@ function defineStreamHandler(builder) {
                 });
                 const results = type === 'movie' ? findResponse.data.movie_results : findResponse.data.tv_results;
                 if (results && results.length > 0) {
-                    effectiveTmdbId = results[0].id.toString(); // Assicurati sia stringa
+                    effectiveTmdbId = results[0].id.toString();
                     console.log(`IMDb ID ${effectiveImdbId} convertito a TMDB ID ${effectiveTmdbId}`);
                 } else {
                     console.warn(`Nessun TMDB ID trovato per IMDb ID ${effectiveImdbId}`);
@@ -94,11 +89,10 @@ function defineStreamHandler(builder) {
         }
 
         let streamUrl;
-        let streamTitle = "Guarda (Direct)"; // Titolo di fallback
+        let streamTitle = "Guarda (Direct)";
 
         if (type === 'movie') {
-            // Assumiamo che l'URL diretto per i film su vixsrc.to sia /movie/TMDB_ID/
-            streamUrl = `https://vixsrc.to/movie/${effectiveTmdbId}/`;
+            streamUrl = `https://vixsrc.to/movie/${effectiveTmdbId}`;
             try {
                 const movieDetails = await axios.get(`https://api.themoviedb.org/3/movie/${effectiveTmdbId}`, {
                     params: { api_key: TMDB_API_KEY, language: 'it-IT' }
@@ -114,6 +108,7 @@ function defineStreamHandler(builder) {
                 console.error(`Stagione o episodio mancanti per serie con TMDB ID ${effectiveTmdbId} dall'ID originale ${id}`);
                 return Promise.resolve({ streams: [] });
             }
+            streamUrl = `https://vixsrc.to/tv/${effectiveTmdbId}/${season}/${episode}`;
             try {
                 const episodeDetails = await axios.get(`https://api.themoviedb.org/3/tv/${effectiveTmdbId}/season/${season}/episode/${episode}`, {
                     params: { api_key: TMDB_API_KEY, language: 'it-IT' }
@@ -121,25 +116,19 @@ function defineStreamHandler(builder) {
                 if (episodeDetails.data && episodeDetails.data.name) {
                     streamTitle = episodeDetails.data.name;
                 } else {
-                    streamTitle = `S${season} E${episode}`; // Fallback se il nome dell'episodio non è disponibile
+                    streamTitle = `S${season} E${episode}`;
                 }
             } catch (e) {
                 console.warn(`Impossibile recuperare il titolo dell'episodio TMDB ID ${effectiveTmdbId} S${season}E${episode}: ${e.message}`);
-                streamTitle = `S${season} E${episode}`; // Fallback in caso di errore
+                streamTitle = `S${season} E${episode}`;
             }
-            streamUrl = `https://vixsrc.to/tv/${effectiveTmdbId}/${season}/${episode}/`;
-        } else {
-            console.warn(`Tipo di media non supportato per lo streaming: ${type}`);
-            return Promise.resolve({ streams: [] });
         }
 
-        // Costruiamo l'array di streams con l'URL diretto senza proxy
         const streams = [
             {
-                name: "Vixsrc (Direct)", // Nome della sorgente visualizzato in Stremio
+                name: "Vixsrc (Direct)",
                 url: streamUrl,
                 title: streamTitle,
-                // Indichiamo che lo stream potrebbe non essere direttamente riproducibile in un browser senza ulteriori manipolazioni
                 behaviorHints: {
                     notWebReady: true
                 }
@@ -148,7 +137,6 @@ function defineStreamHandler(builder) {
 
         return Promise.resolve({ streams: streams });
     });
-
 }
 
 module.exports = defineStreamHandler;
