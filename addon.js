@@ -250,8 +250,9 @@ builder.defineMetaHandler(async ({ type, id }) => {
 
 defineStreamHandlerForAddon(builder);
 
-const PORT = process.env.PORT || 5000; // Porta cambiata a 5000
+const PORT = process.env.PORT || 5555; // Porta cambiata a 5000
 serveHTTP(builder.getInterface(), { port: PORT });
 
 console.log(`Addon in ascolto sulla porta ${PORT}`);
 console.log(`Installa l'addon da: http://127.0.0.1:${PORT}/manifest.json`);
+
