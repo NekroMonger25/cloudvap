@@ -1,17 +1,18 @@
 version: '3.8'
 
 services:
-  vixsrc-stremio-addon:
+  vixsrc-cloudstream-addon:
     build: .
-    container_name: vixsrc-stremio-addon
+    container_name: vixsrc-cloudstream-addon
    # environment:
     #  TMDB_API_KEY: ${TMDB_API_KEY:?Errore: La variabile d'ambiente TMDB_API_KEY deve essere impostata}
     #  MEDIAFLOW_PROXY_URL: ${MEDIAFLOW_PROXY_URL:?Errore: La variabile d'ambiente MEDIAFLOW_PROXY_URL deve essere impostata}
     #  API_PASSWORD: ${API_PASSWORD:?Errore: La variabile d'ambiente API_PASSWORD deve essere impostata}
     #  PORT: ${PORT:-5000} # L'applicazione Node.js userà questa variabile per la porta interna
     ports:
-      - "${PORT:-5000}:5000" # Usa la variabile PORT dal .env o default a 5000 per l'host
+      - "${PORT:-5555}:5555" # Usa la variabile PORT dal .env o default a 5000 per l'host
     restart: unless-stopped
     # Se vuoi che il container abbia accesso a file locali (non necessario per questo addon specifico)
     # volumes:
     #   - .:/usr/src/app # Esempio: monta la directory corrente
+
