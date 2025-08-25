@@ -1,6 +1,10 @@
 const axios = require('axios'); // Necessario per chiamate API aggiuntive
 const TMDB_API_KEY = process.env.TMDB_API_KEY; // Necessaria solo se serve per recupero titoli
 
+/**
+ * Definisce il gestore degli stream sull'istanza del builder dell'addon.
+ * @param {import('stremio-addon-sdk').addonBuilder} builder - L'istanza di addonBuilder.
+ */
 function defineStreamHandler(builder) {
     builder.defineStreamHandler(async ({ type, id, config }) => {
         console.log(`Richiesta stream per: type=${type}, id=${id}`);
@@ -17,10 +21,15 @@ function defineStreamHandler(builder) {
         const idParts = id.split(':');
         const firstPart = idParts[0];
 
+        // Estrarre l'ID IMDb e rimuovere il prefisso "tt"
+        function cleanImdbId(rawId) {
+            return rawId.startsWith('tt') ? rawId.substring(2) : rawId;
+        }
+
         if (type === 'movie') {
-            // accetta id tt...
             if ((idParts.length === 1 && firstPart.startsWith('tt')) || (idParts.length === 2 && firstPart === 'imdb')) {
                 imdbId = idParts.length === 1 ? firstPart : idParts[1];
+                imdbId = cleanImdbId(imdbId);
             } else {
                 console.warn(`ID film non valido per streaming (aspettato IMDb ID): ${id}`);
                 return Promise.resolve({ streams: [] });
@@ -28,10 +37,12 @@ function defineStreamHandler(builder) {
         } else if (type === 'series') {
             if (idParts.length === 4 && firstPart === 'imdb') {
                 imdbId = idParts[1];
+                imdbId = cleanImdbId(imdbId);
                 season = idParts[2];
                 episode = idParts[3];
             } else if (idParts.length === 3 && firstPart.startsWith('tt')) {
                 imdbId = firstPart;
+                imdbId = cleanImdbId(imdbId);
                 season = idParts[1];
                 episode = idParts[2];
             } else {
@@ -53,7 +64,7 @@ function defineStreamHandler(builder) {
 
         if (type === 'movie') {
             streamUrl = `https://vixsrc.to/movie/${imdbId}`;
-            // Facoltativo: puoi tentare di recuperare il titolo dal TMDb se vuoi
+            // Facoltativo: recupera titolo dal TMDb usando TMDB_API_KEY se necessario
         } else if (type === 'series') {
             if (!season || !episode) {
                 console.warn("Stagione o episodio mancanti per serie");
